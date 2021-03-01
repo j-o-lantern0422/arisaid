@@ -9,7 +9,7 @@ module Arisaid
     end
 
     def usergroups!
-      @usergroups = usergroups_with_disabled!.select { |g| g.deleted_by.nil? }
+      @usergroups = usergroups_with_disabled!.select { |g| g[:deleted_by].nil? }
     end
 
     def usergroups_with_disabled
@@ -18,13 +18,14 @@ module Arisaid
 
     def usergroups_with_disabled!
       @usergroups_with_disabled =
-        client.usergroups(include_users: 1, include_disabled: 1)
+        client.usergroups(include_users: 1, include_disabled: 1)[:usergroups].map { |g| g.stringify_keys }
+
     end
 
     def remote!
       @remote = usergroups!.map { |group|
         hash = group.to_h.slice(*self.class.usergroup_valid_attributes)
-        hash[:users] = group.users ? group.users.map { |id| users.find_by(id: id).name rescue nil } : {}
+        hash[:users] = group[:users] ? group[:users].map { |id| users.find_by(id: id).name rescue nil } : {}
         hash.stringify_keys
       }
     end
@@ -35,7 +36,6 @@ module Arisaid
       local.each do |src|
         dst = remote.find_by(name: src['name'])
         next unless dst.nil?
-
         group = usergroups_with_disabled.find_by(name: src['name'])
         if group
           enable group
@@ -91,6 +91,7 @@ module Arisaid
         when changed?(src, dst) then update(src)
         else
           usergroup = usergroups.find_by(name: src['name'])
+          binding.irb
           update_users(usergroup.id, src)
         end
       end if !(enabled && Arisaid.read_only?)
@@ -129,7 +130,7 @@ module Arisaid
     end
 
     def enable(group)
-      client.enable_usergroup(usergroup: group.id)
+      client.enable_usergroup(usergroup: group[:id])
     end
 
     def disable(dst)
