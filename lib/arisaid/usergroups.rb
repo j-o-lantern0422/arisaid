@@ -25,7 +25,7 @@ module Arisaid
     def remote!
       @remote = usergroups!.map { |group|
         hash = group.to_h.slice(*self.class.usergroup_valid_attributes)
-        hash[:users] = group[:users] ? group[:users].map { |id| users.find_by(id: id).name rescue nil } : {}
+        hash['users'] = group['users'] ? group['users'].map { |id| users.find_by(id: id).name rescue nil } : {}
         hash.stringify_keys
       }
     end
@@ -91,8 +91,7 @@ module Arisaid
         when changed?(src, dst) then update(src)
         else
           usergroup = usergroups.find_by(name: src['name'])
-          binding.irb
-          update_users(usergroup.id, src)
+          update_users(usergroup[:id], src)
         end
       end if !(enabled && Arisaid.read_only?)
 
@@ -126,7 +125,7 @@ module Arisaid
     def create(src)
       group = client.create_usergroup(
         src.slice(*self.class.usergroup_valid_attributes.map(&:to_s)))
-      update_users(group.id, src) if group.respond_to?(:id)
+      update_users(group[:id], src) if group.respond_to?(:id)
     end
 
     def enable(group)
@@ -135,13 +134,13 @@ module Arisaid
 
     def disable(dst)
       group = usergroups.find_by(name: dst['name'])
-      client.disable_usergroup(usergroup: group.id)
+      client.disable_usergroup(usergroup: group[:id])
     end
 
     def update(src)
       group = usergroups.find_by(name: src['name'])
       data = src.dup
-      data['usergroup'] = group.id
+      data['usergroup'] = group[:id]
       data.delete('users') unless data['users'].nil?
       client.update_usergroup(data)
     end
@@ -158,7 +157,7 @@ module Arisaid
       usernames.each.with_object([]) do |username, memo|
         user = users.find_by(name: username)
         if user
-          memo << user.id
+          memo << user[:id]
         else
           puts "#{'user not found:'.colorize(:red)} #{username}"
           Arisaid.exit_status = 1
@@ -168,7 +167,7 @@ module Arisaid
 
     class << self
       def usergroup_valid_attributes
-        %i(
+        %w(
           name
           description
           handle
