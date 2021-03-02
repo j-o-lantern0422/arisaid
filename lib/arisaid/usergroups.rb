@@ -9,7 +9,7 @@ module Arisaid
     end
 
     def usergroups!
-      @usergroups = usergroups_with_disabled!.select { |g| g[:deleted_by].nil? }
+      @usergroups = usergroups_with_disabled!.select { |g| g['deleted_by'].nil? }
     end
 
     def usergroups_with_disabled
