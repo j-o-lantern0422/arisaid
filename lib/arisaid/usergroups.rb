@@ -18,7 +18,7 @@ module Arisaid
 
     def usergroups_with_disabled!
       @usergroups_with_disabled =
-        client.usergroups(include_users: 1, include_disabled: 1)[:usergroups].map { |g| g.stringify_keys }
+        client.usergroups(include_users: 1, include_disabled: 1)[:usergroups].map { |g| g.to_h.stringify_keys }
 
     end
 
